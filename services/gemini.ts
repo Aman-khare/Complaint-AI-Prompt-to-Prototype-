@@ -27,16 +27,13 @@ const RESPONSE_SCHEMA: Schema = {
   required: ["classification", "formalComplaint", "recommendedAuthority", "actionSteps"],
 };
 
-export const generateComplaint = async (apiKey: string, userText: string): Promise<ActionResponse> => {
+export const generateComplaint = async (apiKey: string, modelId: string, userText: string): Promise<ActionResponse> => {
   if (!apiKey) {
     throw new Error("API Key is required");
   }
 
   const ai = new GoogleGenAI({ apiKey });
   
-  // Using gemini-3-pro-preview for complex reasoning and legal drafting
-  const modelId = "gemini-3-pro-preview";
-
   const prompt = `
     You are an expert legal aide and professional advocate. 
     Transform the following user grievance into a formal, actionable complaint package.
@@ -54,16 +51,25 @@ export const generateComplaint = async (apiKey: string, userText: string): Promi
   `;
 
   try {
+    // Configure thinking budget if using a supported model (Gemini 3 series or 2.5 series)
+    // Defaulting to a budget that helps with reasoning for legal tasks
+    const config: any = {
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+    };
+
+    // Only add thinking config for models that support it (Gemini 2.5 and 3 series typically do)
+    // Using a safe check or default behavior. For now, we apply it as requested in specs.
+    if (modelId.includes("gemini-3") || modelId.includes("gemini-2.5")) {
+         config.thinkingConfig = {
+            thinkingBudget: 2048
+         };
+    }
+
     const response = await ai.models.generateContent({
       model: modelId,
       contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: RESPONSE_SCHEMA,
-        thinkingConfig: {
-            thinkingBudget: 2048 // Allow some budget for legal reasoning
-        }
-      },
+      config: config,
     });
 
     const text = response.text;
@@ -74,6 +80,6 @@ export const generateComplaint = async (apiKey: string, userText: string): Promi
     return JSON.parse(text) as ActionResponse;
   } catch (error) {
     console.error("Gemini API Error:", error);
-    throw new Error("Failed to generate complaint. Please check your API key and try again.");
+    throw new Error("Failed to generate complaint. Please check your API key and model selection.");
   }
 };

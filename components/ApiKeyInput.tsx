@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
-import { Key, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Key, ShieldCheck, ArrowRight, Cpu } from 'lucide-react';
 
 interface ApiKeyInputProps {
-  onSave: (key: string) => void;
+  onSave: (key: string, model: string) => void;
+  defaultModel?: string;
 }
 
-export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
+const AVAILABLE_MODELS = [
+  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro (Preview) - Best for Reasoning' },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash (Preview) - Fast & Efficient' },
+  { id: 'gemini-flash-latest', name: 'Gemini 2.5 Flash' },
+  { id: 'gemini-flash-lite-latest', name: 'Gemini 2.5 Flash Lite' },
+];
+
+export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave, defaultModel = 'gemini-3-pro-preview' }) => {
   const [inputKey, setInputKey] = useState('');
+  const [selectedModel, setSelectedModel] = useState(defaultModel);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputKey.trim()) {
-      onSave(inputKey.trim());
+      onSave(inputKey.trim(), selectedModel);
     }
   };
 
@@ -23,12 +32,12 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">ComplaintAI Access</h2>
         <p className="text-blue-100 text-sm">
-          Enter your Gemini API Key to activate the legal assistant.
+          Configure your AI assistant settings.
         </p>
       </div>
 
       <div className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label htmlFor="apiKey" className="block text-sm font-medium text-slate-700 mb-1">
               Google Gemini API Key
@@ -43,10 +52,35 @@ export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ onSave }) => {
               required
             />
           </div>
+
+          <div>
+             <label htmlFor="modelSelect" className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+              <Cpu className="w-3 h-3" /> AI Model
+            </label>
+            <div className="relative">
+              <select
+                id="modelSelect"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-slate-800 bg-white appearance-none cursor-pointer"
+              >
+                {AVAILABLE_MODELS.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
           
           <button
             type="submit"
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2"
           >
             Start Drafting <ArrowRight className="w-4 h-4" />
           </button>

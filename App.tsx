@@ -8,6 +8,7 @@ import { Scale, AlertCircle } from 'lucide-react';
 
 const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [modelId, setModelId] = useState<string>('gemini-3-pro-preview');
   const [complaintState, setComplaintState] = useState<ComplaintState>({
     status: 'idle',
     data: null,
@@ -15,21 +16,33 @@ const App: React.FC = () => {
   });
 
   useEffect(() => {
-    // Check local storage for existing key on mount
+    // Check local storage for existing key and model on mount
     const storedKey = localStorage.getItem('gemini_api_key');
+    const storedModel = localStorage.getItem('gemini_model_id');
+    
     if (storedKey) {
       setApiKey(storedKey);
     }
+    if (storedModel) {
+      setModelId(storedModel);
+    }
   }, []);
 
-  const handleSaveApiKey = (key: string) => {
+  const handleSaveApiKey = (key: string, model: string) => {
     setApiKey(key);
+    setModelId(model);
     localStorage.setItem('gemini_api_key', key);
+    localStorage.setItem('gemini_model_id', model);
   };
 
   const handleLogout = () => {
     setApiKey(null);
     localStorage.removeItem('gemini_api_key');
+    // Note: We might want to keep the model preference, but clearing everything for security is safer for "logout"
+    // However, for UX usually preferences stick. Let's clear key only in memory, but maybe clear everything in storage?
+    // Let's clear key from storage, but we can leave model preference or clear it. 
+    // To fully reset:
+    // localStorage.removeItem('gemini_model_id'); 
     setComplaintState({ status: 'idle', data: null, error: null });
   };
 
@@ -39,7 +52,7 @@ const App: React.FC = () => {
     setComplaintState({ status: 'loading', data: null, error: null });
 
     try {
-      const result = await generateComplaint(apiKey, text);
+      const result = await generateComplaint(apiKey, modelId, text);
       setComplaintState({ status: 'success', data: result, error: null });
     } catch (err) {
       setComplaintState({
@@ -66,12 +79,17 @@ const App: React.FC = () => {
             <span className="font-bold text-slate-900 text-lg tracking-tight">ComplaintAI</span>
           </div>
           {apiKey && (
-             <button 
-              onClick={handleLogout}
-              className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
-            >
-              Clear API Key
-            </button>
+             <div className="flex items-center gap-4">
+                <span className="text-xs font-mono text-slate-400 bg-slate-100 px-2 py-1 rounded hidden sm:inline-block">
+                  {modelId}
+                </span>
+                <button 
+                  onClick={handleLogout}
+                  className="text-xs font-medium text-slate-400 hover:text-red-500 transition-colors"
+                >
+                  Change Key/Model
+                </button>
+             </div>
           )}
         </div>
       </header>
@@ -79,7 +97,7 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="flex-grow flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
         {!apiKey ? (
-          <ApiKeyInput onSave={handleSaveApiKey} />
+          <ApiKeyInput onSave={handleSaveApiKey} defaultModel={modelId} />
         ) : (
           <div className="w-full max-w-6xl mx-auto">
             
@@ -118,7 +136,7 @@ const App: React.FC = () => {
       
       {/* Footer */}
       <footer className="py-8 text-center text-slate-400 text-sm">
-        <p>&copy; {new Date().getFullYear()} ComplaintAI MVP. Powered by Gemini 3 Pro.</p>
+        <p>&copy; {new Date().getFullYear()} ComplaintAI MVP. Powered by Google Gemini.</p>
       </footer>
     </div>
   );
