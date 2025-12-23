@@ -1,0 +1,5 @@
+{
+  "name": "ComplaintAI",
+  "description": "An AI-powered assistant that transforms plain language grievances into formal complaints, identifies the correct authority, and outlines actionable next steps.",
+  "requestFramePermissions": []
+}
